@@ -1,6 +1,7 @@
 #Data output of device typically:
-# 
 #[0, 23, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]
+# Pimarity array 0 and 1 are used in the calculation of lux from the BH1750FVI Digital Light intensity Sensor Module (GY-30)
+
 import smbus, time, math
 
 DEVICE     = 0x23 # Default device I2C address when ADO pin is grounded OR 0x5C when a 3.3Volt signal is on the pin  
@@ -10,15 +11,15 @@ RESET      = 0x07 # (00000111 Control Code binary )=Reset data register value.
 
 #Low Resolution Mode - (4 lx precision, 16ms measurement time)
 #High Resolution Mode - (1 lx precision, 120ms measurement time)
-#High Resolution Mode 2 - (0.5 lx precision, 120ms measurement time)
+#High Resolution Mode 2 - (0.5 lx precision, 120ms measurement time) ... WILL USE THIS MODE
 
-# Start measurement at 0.5lx resolution. Time typically 120ms
+# Start measurement at 0.5 lx resolution. Time typically 120ms
 CONTINUOUS_HIGH_RES_MODE_2 = 0x11
 
 bus = smbus.SMBus(1) #Need to enable I2C on PI(Prefertences->Raspberri Pi Configuration->Interfaces (tick i2c))
 
 def convertToNumber(data): #data is an array with 0=
-  result=(data[1] + (256 * data[0])) / 1.2  #Get value in array[1] and if large value(include array[0] : 1.2=Per datasheet accuracy-typical
+  result=(data[1] + (256 * data[0])) / 1.2  #Get value in array[1] and if large value(include array[0] in calc : /1.2=Per datasheet accuracy-typical from output
   return (result)
 
 def readLight(addr=DEVICE):
@@ -30,7 +31,7 @@ def main():
 
     while True:
         lightLevel=math.ceil(readLight()) # Get rounded value
-        try:
+        try:  #Having tested values with a very bright LED torch the values I selected are in the if statements below.
             if lightLevel <10 :
                 print("Too Dark")
             if lightLevel >=10 and lightLevel <100 :
@@ -44,7 +45,7 @@ def main():
                 
         except KeyboardInterrupt:
             print("done")
-        time.sleep(0.5)
+        time.sleep(0.5) # Delay 1/2 sec between measurements
     
 if __name__=="__main__":
    main()
